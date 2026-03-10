@@ -30,7 +30,7 @@ export default function MonitorPage() {
         .select("id, first_name, song_title, artist, selfie_url, selfie_duration, selfie_status")
         .eq("selfie_status", "published")
         .not("selfie_url", "is", null)
-        .order("requested_at", { ascending: true })
+        .order("datetime_requested", { ascending: true })
       if (data) setSelfies(data)
     }
     fetchSelfies()

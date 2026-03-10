@@ -78,7 +78,10 @@ export default function RequestPage() {
       contentType: file.type,
       upsert: false,
     })
-    if (error) return null
+    if (error) {
+      console.error("Selfie upload error:", error.message, error.cause)
+      return null
+    }
     const { data } = supabase.storage.from("selfies").getPublicUrl(filename)
     return data.publicUrl
   }
@@ -138,6 +141,7 @@ export default function RequestPage() {
           notes: notes.trim() || null,
           vibe: vibe,
           selfie_url: selfieUrl,
+          selfie_status: selfieUrl ? "pending" : null,
         },
       ])
       .select("id")

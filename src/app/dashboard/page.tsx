@@ -10,7 +10,7 @@ type Request = {
   artist: string
   notes: string | null
   status: "pending" | "up_next" | "played" | "archived"
-  requested_at: string
+  datetime_requested: string
   price_paid?: number
   votes: number
   vibe: string | null
@@ -63,13 +63,12 @@ export default function Dashboard() {
     if (error) console.error("Update error:", error)
   }
 
-  async function togglePublish(req: Request) {
-    const newStatus = req.selfie_status === "published" ? null : "published"
+  async function moderateSelfie(id: string, status: "published" | "denied") {
     const { error } = await supabase
       .from("requests")
-      .update({ selfie_status: newStatus })
-      .eq("id", req.id)
-    if (error) console.error("Publish error:", error)
+      .update({ selfie_status: status })
+      .eq("id", id)
+    if (error) console.error("Moderation error:", error)
   }
 
   useEffect(() => {
@@ -77,12 +76,12 @@ export default function Dashboard() {
       const { data, error } = await supabase
         .from("requests")
         .select("*")
-        .order("requested_at", { ascending: false })
+        .order("datetime_requested", { ascending: false })
       if (data) {
         prevStatusRef.current = Object.fromEntries(data.map((r) => [r.id, r.status]))
         setRequests(data)
       }
-      if (error) console.error("Fetch error:", error)
+      if (error) console.error("Fetch error:", error.message, error.details, error.hint, error.code)
     }
 
     fetchRequests()
@@ -159,7 +158,7 @@ export default function Dashboard() {
                 <td>${req.price_paid || 0}</td>
                 <td>{formatStatus(req.status)}</td>
                 <td>
-                  {new Date(req.requested_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  {new Date(req.datetime_requested).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </td>
                 <td className="selfie-cell">
                   {req.selfie_url ? (
@@ -171,12 +170,25 @@ export default function Dashboard() {
                         onClick={() => setLightboxUrl(req.selfie_url)}
                         title="Click to enlarge"
                       />
-                      <button
-                        className={`publish-btn${req.selfie_status === "published" ? " unpublish" : ""}`}
-                        onClick={() => togglePublish(req)}
-                      >
-                        {req.selfie_status === "published" ? "Unpublish" : "Publish"}
-                      </button>
+                      {req.selfie_status === "pending" && (
+                        <div className="selfie-actions">
+                          <span className="selfie-badge pending">Pending</span>
+                          <button className="mod-btn approve" onClick={() => moderateSelfie(req.id, "published")}>✓ Approve</button>
+                          <button className="mod-btn deny" onClick={() => moderateSelfie(req.id, "denied")}>✕ Deny</button>
+                        </div>
+                      )}
+                      {req.selfie_status === "published" && (
+                        <div className="selfie-actions">
+                          <span className="selfie-badge published">Live</span>
+                          <button className="mod-btn deny" onClick={() => moderateSelfie(req.id, "denied")}>✕ Remove</button>
+                        </div>
+                      )}
+                      {req.selfie_status === "denied" && (
+                        <div className="selfie-actions">
+                          <span className="selfie-badge denied">Denied</span>
+                          <button className="mod-btn approve" onClick={() => moderateSelfie(req.id, "published")}>✓ Approve</button>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <span className="no-selfie">—</span>
@@ -225,13 +237,23 @@ export default function Dashboard() {
           border: 2px solid transparent; transition: border-color 0.2s;
         }
         .selfie-thumb:hover { border-color: #d8b8ff; }
-        .publish-btn {
+        .selfie-actions {
+          display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+        }
+        .selfie-badge {
+          font-size: 0.68rem; font-weight: bold; padding: 0.15rem 0.4rem;
+          border-radius: 4px; white-space: nowrap;
+        }
+        .selfie-badge.pending { background: #ffd77d; color: #333; }
+        .selfie-badge.published { background: #9effa3; color: #000; }
+        .selfie-badge.denied { background: #ff6b6b; color: #fff; }
+        .mod-btn {
           font-size: 0.72rem; padding: 0.2rem 0.5rem;
           border-radius: 6px; border: none; cursor: pointer;
-          font-weight: bold; background: #9effa3; color: #000;
-          white-space: nowrap;
+          font-weight: bold; white-space: nowrap; width: 100%;
         }
-        .publish-btn.unpublish { background: #ff6b6b; color: #fff; }
+        .mod-btn.approve { background: #9effa3; color: #000; }
+        .mod-btn.deny { background: #ff6b6b; color: #fff; }
         .no-selfie { color: #6b586e; }
         .actions button {
           margin-right: 0.25rem; margin-bottom: 0.25rem;
