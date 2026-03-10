@@ -141,7 +141,7 @@ export default function RequestPage() {
           notes: notes.trim() || null,
           vibe: vibe,
           selfie_url: selfieUrl,
-          selfie_status: selfieUrl ? "pending" : null,
+          selfie_status: selfieUrl ? "pending" : "none",
         },
       ])
       .select("id")

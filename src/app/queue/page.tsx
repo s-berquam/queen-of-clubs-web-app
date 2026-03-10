@@ -134,7 +134,7 @@ export default function QueuePage() {
   }
 
   const myRequest = myRequestId ? requests.find((r) => r.id === myRequestId) : null
-  const showBumpButton = myRequest?.selfie_status === "published"
+  const showBumpButton = myRequest?.selfie_status === "approved"
   const displayed = vibeFilter ? requests.filter((r) => r.vibe === vibeFilter) : requests
 
   return (

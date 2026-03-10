@@ -28,7 +28,7 @@ export default function MonitorPage() {
       const { data } = await supabase
         .from("requests")
         .select("id, first_name, song_title, artist, selfie_url, selfie_duration, selfie_status")
-        .eq("selfie_status", "published")
+        .eq("selfie_status", "approved")
         .not("selfie_url", "is", null)
         .order("datetime_requested", { ascending: true })
       if (data) setSelfies(data)
@@ -40,7 +40,7 @@ export default function MonitorPage() {
       .on("postgres_changes", { event: "*", schema: "public", table: "requests" }, (payload) => {
         if (payload.eventType === "UPDATE") {
           const r = payload.new as SelfieRequest
-          if (r.selfie_status === "published" && r.selfie_url) {
+          if (r.selfie_status === "approved" && r.selfie_url) {
             setSelfies((prev) => {
               const exists = prev.find((x) => x.id === r.id)
               if (exists) return prev.map((x) => (x.id === r.id ? r : x))

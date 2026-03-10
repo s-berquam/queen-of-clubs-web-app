@@ -63,7 +63,7 @@ export default function Dashboard() {
     if (error) console.error("Update error:", error)
   }
 
-  async function moderateSelfie(id: string, status: "published" | "denied") {
+  async function moderateSelfie(id: string, status: "approved" | "rejected") {
     const { error } = await supabase
       .from("requests")
       .update({ selfie_status: status })
@@ -173,20 +173,20 @@ export default function Dashboard() {
                       {req.selfie_status === "pending" && (
                         <div className="selfie-actions">
                           <span className="selfie-badge pending">Pending</span>
-                          <button className="mod-btn approve" onClick={() => moderateSelfie(req.id, "published")}>✓ Approve</button>
-                          <button className="mod-btn deny" onClick={() => moderateSelfie(req.id, "denied")}>✕ Deny</button>
+                          <button className="mod-btn approve" onClick={() => moderateSelfie(req.id, "approved")}>✓ Approve</button>
+                          <button className="mod-btn deny" onClick={() => moderateSelfie(req.id, "rejected")}>✕ Deny</button>
                         </div>
                       )}
-                      {req.selfie_status === "published" && (
+                      {req.selfie_status === "approved" && (
                         <div className="selfie-actions">
                           <span className="selfie-badge published">Live</span>
-                          <button className="mod-btn deny" onClick={() => moderateSelfie(req.id, "denied")}>✕ Remove</button>
+                          <button className="mod-btn deny" onClick={() => moderateSelfie(req.id, "rejected")}>✕ Remove</button>
                         </div>
                       )}
-                      {req.selfie_status === "denied" && (
+                      {req.selfie_status === "rejected" && (
                         <div className="selfie-actions">
                           <span className="selfie-badge denied">Denied</span>
-                          <button className="mod-btn approve" onClick={() => moderateSelfie(req.id, "published")}>✓ Approve</button>
+                          <button className="mod-btn approve" onClick={() => moderateSelfie(req.id, "approved")}>✓ Approve</button>
                         </div>
                       )}
                     </div>
