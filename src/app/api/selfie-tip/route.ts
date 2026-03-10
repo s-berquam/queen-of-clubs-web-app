@@ -24,29 +24,37 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid tip amount" }, { status: 400 })
   }
 
-  const { result } = await client.checkout.paymentLinks.create({
-    idempotencyKey: crypto.randomUUID(),
-    order: {
-      locationId: process.env.SQUARE_LOCATION_ID!,
-      lineItems: [
-        {
-          name: tier.label,
-          quantity: "1",
-          basePriceMoney: {
-            amount: BigInt(tier.amountCents),
-            currency: "USD",
+  let result
+  try {
+    const response = await client.checkout.paymentLinks.create({
+      idempotencyKey: crypto.randomUUID(),
+      order: {
+        locationId: process.env.SQUARE_LOCATION_ID!,
+        lineItems: [
+          {
+            name: tier.label,
+            quantity: "1",
+            basePriceMoney: {
+              amount: BigInt(tier.amountCents),
+              currency: "USD",
+            },
           },
+        ],
+        metadata: {
+          request_id: requestId,
+          duration_bonus: String(tier.durationBonus),
         },
-      ],
-      metadata: {
-        request_id: requestId,
-        duration_bonus: String(tier.durationBonus),
       },
-    },
-    checkoutOptions: {
-      redirectUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/queue?selfie_success=true`,
-    },
-  })
+      checkoutOptions: {
+        redirectUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/queue?selfie_success=true`,
+      },
+    })
+    result = response.result
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error("Square error:", message)
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 
   const url = result.paymentLink?.url
   if (!url) return NextResponse.json({ error: "Failed to create payment link" }, { status: 500 })

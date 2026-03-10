@@ -130,7 +130,12 @@ export default function QueuePage() {
     const json = await res.json()
     setTipping(false)
     setTipModalOpen(false)
-    if (json.url) window.location.href = json.url
+    if (json.url) {
+      window.location.href = json.url
+    } else {
+      console.error("Selfie tip error:", json.error)
+      alert("Payment setup failed. Please try again.")
+    }
   }
 
   const myRequest = myRequestId ? requests.find((r) => r.id === myRequestId) : null
