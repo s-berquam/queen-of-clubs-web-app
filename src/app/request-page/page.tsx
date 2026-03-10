@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { supabase } from "lib/supabase"
 import { v4 as uuidv4 } from "uuid"
 import Link from "next/link"
@@ -24,9 +24,12 @@ export default function RequestPage() {
   const [vibe, setVibe] = useState<Vibe | null>(null)
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
+  const [selfieFile, setSelfieFile] = useState<File | null>(null)
+  const [selfiePreview, setSelfiePreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [errorMsg, setErrorMsg] = useState("")
+  const cameraRef = useRef<HTMLInputElement>(null)
 
   function validateEmail(email: string) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -45,7 +48,7 @@ export default function RequestPage() {
       const json = await res.json()
       setSuggestions(json.suggestions ?? [])
     } catch {
-      // suggestions are optional, fail silently
+      // suggestions are optional
     } finally {
       setLoadingSuggestions(false)
     }
@@ -54,6 +57,30 @@ export default function RequestPage() {
   function applySuggestion(s: Suggestion) {
     setSong(s.song_title)
     setArtist(s.artist)
+  }
+
+  function handleSelfieCapture(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setSelfieFile(file)
+    setSelfiePreview(URL.createObjectURL(file))
+  }
+
+  function removeSelfie() {
+    setSelfieFile(null)
+    setSelfiePreview(null)
+    if (cameraRef.current) cameraRef.current.value = ""
+  }
+
+  async function uploadSelfie(file: File): Promise<string | null> {
+    const filename = `${uuidv4()}.jpg`
+    const { error } = await supabase.storage.from("selfies").upload(filename, file, {
+      contentType: file.type,
+      upsert: false,
+    })
+    if (error) return null
+    const { data } = supabase.storage.from("selfies").getPublicUrl(filename)
+    return data.publicUrl
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -87,26 +114,41 @@ export default function RequestPage() {
       return
     }
 
-    const appleId = uuidv4()
+    // Upload selfie if captured
+    let selfieUrl: string | null = null
+    if (selfieFile) {
+      selfieUrl = await uploadSelfie(selfieFile)
+      if (!selfieUrl) {
+        setErrorMsg("Selfie upload failed. Try again or remove the selfie.")
+        setLoading(false)
+        return
+      }
+    }
 
-    const { error } = await supabase.from("requests").insert([
-      {
-        first_name: firstName.trim(),
-        song_title: song.trim(),
-        artist: artist.trim(),
-        apple_music_id: appleId,
-        email: email.trim() || null,
-        phone: phone.trim() || null,
-        notes: notes.trim() || null,
-        vibe: vibe,
-      },
-    ])
+    const { data, error } = await supabase
+      .from("requests")
+      .insert([
+        {
+          first_name: firstName.trim(),
+          song_title: song.trim(),
+          artist: artist.trim(),
+          apple_music_id: uuidv4(),
+          email: email.trim() || null,
+          phone: phone.trim() || null,
+          notes: notes.trim() || null,
+          vibe: vibe,
+          selfie_url: selfieUrl,
+        },
+      ])
+      .select("id")
+      .single()
 
     setLoading(false)
 
     if (error) {
       setErrorMsg(`Supabase insert error: ${error.message}`)
     } else {
+      if (data?.id) localStorage.setItem("my_request_id", data.id)
       setFirstName("")
       setSong("")
       setArtist("")
@@ -115,6 +157,8 @@ export default function RequestPage() {
       setNotes("")
       setVibe(null)
       setSuggestions([])
+      setSelfieFile(null)
+      setSelfiePreview(null)
       setSuccess(true)
     }
   }
@@ -165,9 +209,7 @@ export default function RequestPage() {
 
           {vibe && (
             <div className="suggestions">
-              {loadingSuggestions && (
-                <p className="suggestions-hint">Finding popular songs...</p>
-              )}
+              {loadingSuggestions && <p className="suggestions-hint">Finding popular songs...</p>}
               {!loadingSuggestions && suggestions.length > 0 && (
                 <>
                   <p className="suggestions-hint">Popular {vibe} picks — tap to fill in:</p>
@@ -208,6 +250,36 @@ export default function RequestPage() {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
           />
+
+          {/* Selfie */}
+          <div className="selfie-section">
+            <p className="vibe-label">Selfie (optional — shown on the big screen!)</p>
+            {selfiePreview ? (
+              <div className="selfie-preview">
+                <img src={selfiePreview} alt="Your selfie" className="preview-img" />
+                <button type="button" className="remove-selfie" onClick={removeSelfie}>
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="selfie-btn"
+                onClick={() => cameraRef.current?.click()}
+              >
+                📸 Take a Selfie
+              </button>
+            )}
+            <input
+              ref={cameraRef}
+              type="file"
+              accept="image/*"
+              capture={"user" as never}
+              onChange={handleSelfieCapture}
+              style={{ display: "none" }}
+            />
+          </div>
+
           <button disabled={loading} className="submit-btn">
             {loading ? "Submitting..." : "Send Request"}
           </button>
@@ -261,7 +333,8 @@ export default function RequestPage() {
           resize: vertical;
           min-height: 90px;
         }
-        .vibe-section {
+        .vibe-section,
+        .selfie-section {
           display: flex;
           flex-direction: column;
           gap: 0.4rem;
@@ -316,6 +389,41 @@ export default function RequestPage() {
         }
         .suggestion-chip:hover {
           background: #ffd4a0;
+        }
+        .selfie-btn {
+          padding: 0.6rem 1rem;
+          border-radius: 12px;
+          border: 2px dashed #FF6F61;
+          background: transparent;
+          color: #FF6F61;
+          font-size: 0.95rem;
+          cursor: pointer;
+          transition: all 0.2s;
+          text-align: center;
+        }
+        .selfie-btn:hover {
+          background: #fff0eb;
+        }
+        .selfie-preview {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .preview-img {
+          width: 100%;
+          max-height: 220px;
+          object-fit: cover;
+          border-radius: 12px;
+          border: 2px solid #FF6F61;
+        }
+        .remove-selfie {
+          background: transparent;
+          border: none;
+          color: #ff6b6b;
+          font-size: 0.85rem;
+          cursor: pointer;
+          text-decoration: underline;
         }
         .submit-btn {
           background-color: #A3DE83;

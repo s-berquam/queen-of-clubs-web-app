@@ -12,9 +12,11 @@ type Request = {
   status: "pending" | "up_next" | "played" | "archived"
   requested_at: string
   price_paid?: number
-  request_count?: number
   votes: number
   vibe: string | null
+  selfie_url: string | null
+  selfie_status: string | null
+  selfie_duration: number
 }
 
 const STATUS_VALUES: Record<string, Request["status"]> = {
@@ -29,6 +31,7 @@ export default function Dashboard() {
   const [requests, setRequests] = useState<Request[]>([])
   const [toast, setToast] = useState<string | null>(null)
   const [vibeFilter, setVibeFilter] = useState<string | null>(null)
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
   const prevStatusRef = useRef<Record<string, string>>({})
 
   useEffect(() => {
@@ -40,7 +43,7 @@ export default function Dashboard() {
   function formatStatus(status: string) {
     return status
       .split("_")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join(" ")
   }
 
@@ -60,13 +63,21 @@ export default function Dashboard() {
     if (error) console.error("Update error:", error)
   }
 
+  async function togglePublish(req: Request) {
+    const newStatus = req.selfie_status === "published" ? null : "published"
+    const { error } = await supabase
+      .from("requests")
+      .update({ selfie_status: newStatus })
+      .eq("id", req.id)
+    if (error) console.error("Publish error:", error)
+  }
+
   useEffect(() => {
     async function fetchRequests() {
       const { data, error } = await supabase
         .from("requests")
         .select("*")
         .order("requested_at", { ascending: false })
-
       if (data) {
         prevStatusRef.current = Object.fromEntries(data.map((r) => [r.id, r.status]))
         setRequests(data)
@@ -85,9 +96,7 @@ export default function Dashboard() {
         } else if (payload.eventType === "UPDATE") {
           const updated = payload.new as Request
           const prevStatus = prevStatusRef.current[updated.id]
-          if (prevStatus !== "up_next" && updated.status === "up_next") {
-            notifyUpNext(updated)
-          }
+          if (prevStatus !== "up_next" && updated.status === "up_next") notifyUpNext(updated)
           prevStatusRef.current[updated.id] = updated.status
           setRequests((prev) => prev.map((r) => (r.id === updated.id ? updated : r)))
         } else if (payload.eventType === "DELETE") {
@@ -107,23 +116,19 @@ export default function Dashboard() {
     <main className="dashboard">
       {toast && <div className="toast">{toast}</div>}
 
+      {lightboxUrl && (
+        <div className="lightbox" onClick={() => setLightboxUrl(null)}>
+          <img src={lightboxUrl} alt="Selfie" className="lightbox-img" />
+          <span className="lightbox-close">✕</span>
+        </div>
+      )}
+
       <h1>🎶 Live Song Requests</h1>
 
       <div className="vibe-filters">
-        <button
-          className={`filter-btn${!vibeFilter ? " active" : ""}`}
-          onClick={() => setVibeFilter(null)}
-        >
-          All
-        </button>
+        <button className={`filter-btn${!vibeFilter ? " active" : ""}`} onClick={() => setVibeFilter(null)}>All</button>
         {VIBES.map((v) => (
-          <button
-            key={v}
-            className={`filter-btn${vibeFilter === v ? " active" : ""}`}
-            onClick={() => setVibeFilter(v)}
-          >
-            {v}
-          </button>
+          <button key={v} className={`filter-btn${vibeFilter === v ? " active" : ""}`} onClick={() => setVibeFilter(v)}>{v}</button>
         ))}
       </div>
 
@@ -139,6 +144,7 @@ export default function Dashboard() {
               <th>Tip</th>
               <th>Status</th>
               <th>Time</th>
+              <th>Selfie</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -153,16 +159,32 @@ export default function Dashboard() {
                 <td>${req.price_paid || 0}</td>
                 <td>{formatStatus(req.status)}</td>
                 <td>
-                  {new Date(req.requested_at).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {new Date(req.requested_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </td>
+                <td className="selfie-cell">
+                  {req.selfie_url ? (
+                    <div className="selfie-controls">
+                      <img
+                        src={req.selfie_url}
+                        alt="selfie"
+                        className="selfie-thumb"
+                        onClick={() => setLightboxUrl(req.selfie_url)}
+                        title="Click to enlarge"
+                      />
+                      <button
+                        className={`publish-btn${req.selfie_status === "published" ? " unpublish" : ""}`}
+                        onClick={() => togglePublish(req)}
+                      >
+                        {req.selfie_status === "published" ? "Unpublish" : "Publish"}
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="no-selfie">—</span>
+                  )}
                 </td>
                 <td className="actions">
                   {Object.entries(STATUS_VALUES).map(([label, value]) => (
-                    <button key={value} onClick={() => updateStatus(req.id, value)}>
-                      {label}
-                    </button>
+                    <button key={value} onClick={() => updateStatus(req.id, value)}>{label}</button>
                   ))}
                 </td>
               </tr>
@@ -179,88 +201,73 @@ export default function Dashboard() {
           color: #f0e6f5;
           position: relative;
         }
-        h1 {
-          text-align: center;
-          font-size: 2rem;
-          margin-bottom: 1rem;
-        }
+        h1 { text-align: center; font-size: 2rem; margin-bottom: 1rem; }
         .vibe-filters {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.5rem;
-          justify-content: center;
-          margin-bottom: 1rem;
+          display: flex; flex-wrap: wrap; gap: 0.5rem;
+          justify-content: center; margin-bottom: 1rem;
         }
         .filter-btn {
-          padding: 0.3rem 0.8rem;
-          border-radius: 20px;
-          border: 2px solid #a07cc5;
-          background: transparent;
-          color: #f0e6f5;
-          font-size: 0.8rem;
-          cursor: pointer;
-          transition: all 0.2s;
+          padding: 0.3rem 0.8rem; border-radius: 20px;
+          border: 2px solid #a07cc5; background: transparent;
+          color: #f0e6f5; font-size: 0.8rem; cursor: pointer; transition: all 0.2s;
         }
-        .filter-btn.active {
-          background: #a07cc5;
-          color: white;
+        .filter-btn.active { background: #a07cc5; color: white; }
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th, td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid #6b586e; }
+        tr.played { background-color: #88805f; }
+        .votes { font-weight: bold; color: #FF6F61; }
+        .selfie-cell { vertical-align: middle; }
+        .selfie-controls { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+        .selfie-thumb {
+          width: 48px; height: 48px; object-fit: cover;
+          border-radius: 6px; cursor: pointer;
+          border: 2px solid transparent; transition: border-color 0.2s;
         }
-        .table-wrapper {
-          overflow-x: auto;
+        .selfie-thumb:hover { border-color: #d8b8ff; }
+        .publish-btn {
+          font-size: 0.72rem; padding: 0.2rem 0.5rem;
+          border-radius: 6px; border: none; cursor: pointer;
+          font-weight: bold; background: #9effa3; color: #000;
+          white-space: nowrap;
         }
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          min-width: 700px;
-        }
-        th, td {
-          padding: 0.5rem 0.75rem;
-          text-align: left;
-          border-bottom: 1px solid #6b586e;
-        }
-        tr.played {
-          background-color: #88805f;
-        }
-        .votes {
-          font-weight: bold;
-          color: #FF6F61;
-        }
+        .publish-btn.unpublish { background: #ff6b6b; color: #fff; }
+        .no-selfie { color: #6b586e; }
         .actions button {
-          margin-right: 0.25rem;
-          margin-bottom: 0.25rem;
-          padding: 0.25rem 0.5rem;
-          font-size: 0.85rem;
-          border-radius: 6px;
-          border: none;
-          cursor: pointer;
-          font-weight: bold;
+          margin-right: 0.25rem; margin-bottom: 0.25rem;
+          padding: 0.25rem 0.5rem; font-size: 0.85rem;
+          border-radius: 6px; border: none; cursor: pointer; font-weight: bold;
         }
         .actions button:nth-child(1) { background-color: #9effa3; color: #000; }
         .actions button:nth-child(2) { background-color: #ffd77d; color: #000; }
         .actions button:nth-child(3) { background-color: #ff6b6b; color: #fff; }
         .toast {
-          position: fixed;
-          top: 1rem;
-          left: 50%;
-          transform: translateX(-50%);
-          background-color: #ffd77d;
-          color: #000;
-          padding: 0.75rem 1.5rem;
-          border-radius: 8px;
-          font-weight: bold;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-          z-index: 1000;
+          position: fixed; top: 1rem; left: 50%; transform: translateX(-50%);
+          background-color: #ffd77d; color: #000; padding: 0.75rem 1.5rem;
+          border-radius: 8px; font-weight: bold;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.3); z-index: 1000;
+        }
+        .lightbox {
+          position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+          display: flex; align-items: center; justify-content: center;
+          z-index: 2000; cursor: pointer;
+        }
+        .lightbox-img {
+          max-width: 90vw; max-height: 90vh;
+          border-radius: 12px; object-fit: contain;
+        }
+        .lightbox-close {
+          position: absolute; top: 1.5rem; right: 1.5rem;
+          color: white; font-size: 1.5rem; cursor: pointer;
         }
         @media (max-width: 768px) {
           th, td { padding: 0.4rem 0.5rem; font-size: 0.9rem; }
           .actions button { font-size: 0.8rem; padding: 0.2rem 0.4rem; }
-          .toast { font-size: 0.85rem; padding: 0.6rem 1rem; }
         }
         @media (max-width: 480px) {
           h1 { font-size: 1.5rem; }
           th, td { font-size: 0.85rem; }
           .actions button { font-size: 0.75rem; padding: 0.2rem 0.3rem; }
-          .toast { font-size: 0.8rem; padding: 0.5rem 0.9rem; }
         }
       `}</style>
     </main>
