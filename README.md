@@ -1,46 +1,127 @@
 <h1 align="center">
-<em>Queen of Clubs</em>: A song request application for DJs and music lovers alike
+  <em>Queen of Clubs</em> — Song Request App
 </h1>
 
-## Getting Started
+<p align="center">
+  A real-time song request web app for DJs and music lovers. Guests request songs, vote on the queue, and set the vibe — the DJ stays in control.
+</p>
 
-First, install the package:
+---
 
+## Features
+
+- **Song Requests** — Guests submit song requests with name, contact info, and optional notes
+- **Vibe Selection** — Requests are tagged with a vibe: Hype, Sing-Along, Feel-Good, Slow Jam, or Throwback
+- **Song Suggestions** — When a vibe is selected, the top 5 most-requested songs for that vibe are suggested
+- **Live Queue & Voting** — Public `/queue` page shows pending requests; guests can 🔥 hype their favorites (session-based, no login required)
+- **DJ Dashboard** — Real-time admin view at `/dashboard` with vibe filtering, vote counts, and manual queue control (Pending → Up Next → Played → Archived)
+- **Real-time Updates** — Powered by Supabase Realtime; vote counts and new requests update instantly across all clients
+- **Tip Integration** — Stripe-based tip/payment flow for priority requests
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript |
+| Styling | Tailwind CSS + styled-jsx |
+| Database | Supabase (PostgreSQL) |
+| Realtime | Supabase Realtime |
+| Payments | Stripe |
+| SMS | Twilio |
+| Hosting | Vercel |
+
+---
+
+## Pages
+
+| Route | Description |
+|-------|-------------|
+| `/` | Landing page |
+| `/request-page` | Song request form with vibe picker and suggestions |
+| `/queue` | Public queue — browse requests, filter by vibe, vote with 🔥 |
+| `/dashboard` | DJ admin console — live requests, status controls, vibe filter |
+
+---
+
+## Database Schema
+
+**`requests` table** (Supabase)
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | uuid | Primary key |
+| `first_name` | text | Requester's name |
+| `song_title` | text | |
+| `artist` | text | |
+| `vibe` | text | Hype, Sing-Along, Feel-Good, Slow Jam, Throwback |
+| `votes` | integer | Default 0 |
+| `status` | text | pending, up_next, played, archived |
+| `email` | text | Optional |
+| `phone` | text | Optional |
+| `notes` | text | Optional |
+| `price_paid` | numeric | Tip amount |
+| `requested_at` | timestamp | |
+
+**Supabase Functions**
+- `increment_votes(request_id uuid)` — atomic vote increment
+- `get_song_suggestions(p_vibe text, p_event_id uuid)` — top 5 most-requested songs for a vibe
+
+---
+
+## Local Development
+
+**1. Clone the repo**
 ```bash
 git clone https://github.com/s-berquam/queen-of-clubs-web-app.git
+cd queen-of-clubs-web-app
 ```
 
-Install dependencies:
-
+**2. Install dependencies**
 ```bash
 npm install
 ```
-Start the development server:
 
+**3. Set up environment variables**
+```bash
+cp env.example .env.local
+```
+
+Fill in your `.env.local`:
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+STRIPE_SECRET_KEY=
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
+TWILIO_PHONE_NUMBER=
+```
+
+**4. Run the dev server**
 ```bash
 npm run dev
 ```
 
-Open http://localhost:3000 with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-### Tech Stack
+---
 
-Frontend: React, CSS
+## Deployment
 
-Backend: Supabase
+Deployed on [Vercel](https://vercel.com). Every push to `main` triggers an automatic deployment.
 
-Hosting: Vercel
+To deploy your own instance:
+1. Import the repo into Vercel
+2. Add the environment variables listed above
+3. Deploy
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Contact
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Contributing
-
-Email: sarah.berquam@gmail.com
-
-Instagram: @all_love_jams
-
-LinkedIn: https://www.linkedin.com/in/sarahberquam/
+- Email: sarah.berquam@gmail.com
+- Instagram: [@all_love_jams](https://instagram.com/all_love_jams)
+- LinkedIn: [sarahberquam](https://www.linkedin.com/in/sarahberquam/)
