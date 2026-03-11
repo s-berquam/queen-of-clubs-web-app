@@ -16,7 +16,8 @@
 - **Live Queue & Voting** — Public `/queue` page shows pending requests; guests can 🔥 hype their favorites (session-based, no login required)
 - **DJ Dashboard** — Real-time admin view at `/dashboard` with vibe filtering, vote counts, and manual queue control (Pending → Up Next → Played → Archived)
 - **Real-time Updates** — Powered by Supabase Realtime; vote counts and new requests update instantly across all clients
-- **Tip Integration** — Stripe-based tip/payment flow for priority requests
+- **Tip Integration** — Square-based tip/payment flow for priority requests; tip amount determines queue priority weight
+- **Priority Queue** — Tips of $1/$3/$5/$10+ map to priority weights 1–4; higher tips float to the top of the queue
 
 ---
 
@@ -29,7 +30,7 @@
 | Styling | Tailwind CSS + styled-jsx |
 | Database | Supabase (PostgreSQL) |
 | Realtime | Supabase Realtime |
-| Payments | Stripe |
+| Payments | Square |
 | SMS | Twilio |
 | Hosting | Vercel |
 
@@ -68,6 +69,15 @@
 **Supabase Functions**
 - `increment_votes(request_id uuid)` — atomic vote increment
 - `get_song_suggestions(p_vibe text, p_event_id uuid)` — top 5 most-requested songs for a vibe
+
+---
+
+## Scripts
+
+| Script | Description |
+|--------|-------------|
+| `scripts/sendpromo.ts` | Send a test SMS via Twilio (requires `TWILIO_ACCOUNT_SID` and `TWILIO_AUTH_TOKEN`) |
+| `square-webhook-dev.js` | Local Express server for testing Square payment webhooks on port 3000; maps tip amounts to priority weights ($1→1, $3→2, $5→3, $10+→4) |
 
 ---
 
