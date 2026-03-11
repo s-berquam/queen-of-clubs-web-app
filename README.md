@@ -1,5 +1,5 @@
 <h1 align="center">
-  <em>Queen of Clubs</em> — Song Request App
+  <em>QueueTip</em> — Song Request App
 </h1>
 
 <p align="center">
