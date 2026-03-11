@@ -85,8 +85,8 @@
 
 **1. Clone the repo**
 ```bash
-git clone https://github.com/s-berquam/queen-of-clubs-web-app.git
-cd queen-of-clubs-web-app
+git clone https://github.com/s-berquam/queue-tip.git
+cd queue-tip
 ```
 
 **2. Install dependencies**
