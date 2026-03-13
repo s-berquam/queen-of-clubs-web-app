@@ -3,7 +3,7 @@
 </h1>
 
 <p align="center">
-  A real-time song request web app for DJs and music lovers. Guests request songs, vote on the queue, and set the vibe — the DJ stays in control.
+  A real-time song request app for DJs and music lovers. Guests request songs, set the vibe and capture the moment — the DJ stays in control.
 </p>
 
 ---
@@ -11,13 +11,12 @@
 ## Features
 
 - **Song Requests** — Guests submit song requests with name, contact info, and optional notes
-- **Vibe Selection** — Requests are tagged with a vibe: Hype, Sing-Along, Feel-Good, Slow Jam, or Throwback
-- **Song Suggestions** — When a vibe is selected, the top 5 most-requested songs for that vibe are suggested
-- **Live Queue & Voting** — Public `/queue` page shows pending requests; guests can 🔥 hype their favorites (session-based, no login required)
-- **DJ Dashboard** — Real-time admin view at `/dashboard` with vibe filtering, vote counts, and manual queue control (Pending → Up Next → Played → Archived)
-- **Real-time Updates** — Powered by Supabase Realtime; vote counts and new requests update instantly across all clients
+- **Song Suggestions** — Select an artist and a vibe to let the DJ choose a song
+- **Selfie/Social Media Integration** — Upload pictures for real time video display and social media posts to the Queen of Clubs socials 
+- **DJ Dashboard** — Real-time admin view at `/dashboard` with vibe filtering, manual queue control (Pending → Up Next → Played → Archived)
+- **Real-time Updates** — Powered by Supabase Realtime; new requests update instantly across all clients
 - **Tip Integration** — Square-based tip/payment flow for priority requests; tip amount determines queue priority weight
-- **Priority Queue** — Tips of $1/$3/$5/$10+ map to priority weights 1–4; higher tips float to the top of the queue
+- **Queue Boost** — Tips of $1/$3/$5/$10+ map to priority weights 1–4; higher tips float to the top of the queue
 
 ---
 
