@@ -139,6 +139,7 @@ export default function Dashboard() {
               <th>Artist</th>
               <th>Requester</th>
               <th>Vibe</th>
+              <th>Notes</th>
               <th>🔥</th>
               <th>Tip</th>
               <th>Status</th>
@@ -154,6 +155,7 @@ export default function Dashboard() {
                 <td>{req.artist}</td>
                 <td>{req.first_name}</td>
                 <td>{req.vibe || "—"}</td>
+                <td className="notes">{req.notes || "—"}</td>
                 <td className="votes">{req.votes}</td>
                 <td>${req.price_paid || 0}</td>
                 <td>{formatStatus(req.status)}</td>
@@ -195,9 +197,11 @@ export default function Dashboard() {
                   )}
                 </td>
                 <td className="actions">
-                  {Object.entries(STATUS_VALUES).map(([label, value]) => (
-                    <button key={value} onClick={() => updateStatus(req.id, value)}>{label}</button>
-                  ))}
+                  {req.status !== "up_next" && (
+                    <button className="up-next-btn" onClick={() => updateStatus(req.id, "up_next")}>▶ Up Next</button>
+                  )}
+                  <button className="played-btn" onClick={() => updateStatus(req.id, "played")}>✓ Played</button>
+                  <button className="archive-btn" onClick={() => updateStatus(req.id, "archived")}>✕ Archive</button>
                 </td>
               </tr>
             ))}
@@ -229,6 +233,7 @@ export default function Dashboard() {
         th, td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid #6b586e; }
         tr.played { background-color: #88805f; }
         .votes { font-weight: bold; color: #FF6F61; }
+        .notes { font-size: 0.85rem; color: #c9b8e0; max-width: 160px; white-space: pre-wrap; }
         .selfie-cell { vertical-align: middle; }
         .selfie-controls { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
         .selfie-thumb {
@@ -260,9 +265,9 @@ export default function Dashboard() {
           padding: 0.25rem 0.5rem; font-size: 0.85rem;
           border-radius: 6px; border: none; cursor: pointer; font-weight: bold;
         }
-        .actions button:nth-child(1) { background-color: #9effa3; color: #000; }
-        .actions button:nth-child(2) { background-color: #ffd77d; color: #000; }
-        .actions button:nth-child(3) { background-color: #ff6b6b; color: #fff; }
+        .up-next-btn { background-color: #ffd77d; color: #000; font-size: 0.95rem !important; padding: 0.4rem 0.75rem !important; }
+        .played-btn { background-color: #9effa3; color: #000; }
+        .archive-btn { background-color: #ff6b6b; color: #fff; }
         .toast {
           position: fixed; top: 1rem; left: 50%; transform: translateX(-50%);
           background-color: #ffd77d; color: #000; padding: 0.75rem 1.5rem;
