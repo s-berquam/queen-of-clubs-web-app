@@ -86,7 +86,7 @@ export default function RequestPage() {
       setLoading(false)
       return
     }
-    if (!artist.trim()) {
+    if (!djChoice && !artist.trim()) {
       setErrorMsg("Artist is required.")
       setLoading(false)
       return
@@ -121,8 +121,8 @@ export default function RequestPage() {
       .from("requests")
       .insert([{
         first_name: firstName.trim(),
-        song_title: djChoice ? "" : song.trim(),
-        artist: artist.trim(),
+        song_title: song.trim(),
+        artist: djChoice ? "DJ's Choice" : artist.trim(),
         apple_music_id: uuidv4(),
         email: email.trim() || null,
         phone: phone.trim() || null,
@@ -258,37 +258,59 @@ export default function RequestPage() {
             onChange={(e) => setFirstName(e.target.value)}
           />
 
-          <input
-            className="input-field"
-            name="artist"
-            autoComplete="off"
-            placeholder="Artist *"
-            value={artist}
-            onChange={(e) => setArtist(e.target.value)}
-          />
+          {!djChoice && (
+            <input
+              className="input-field"
+              name="artist"
+              autoComplete="off"
+              placeholder="Artist *"
+              value={artist}
+              onChange={(e) => setArtist(e.target.value)}
+            />
+          )}
 
           <div className="song-section">
-            <div className="song-row">
-              <input
-                className={`input-field song-input${djChoice ? " dimmed" : ""}`}
-                name="song"
-                autoComplete="off"
-                placeholder="Song title"
-                value={djChoice ? "" : song}
-                onChange={(e) => handleSongInput(e.target.value)}
-                onFocus={() => { if (djChoice) { setDjChoice(false); setVibe(null); setSuggestions([]) } }}
-                disabled={false}
-              />
-              <button
-                type="button"
-                className={`dj-choice-btn${djChoice ? " active" : ""}${song.trim() && !djChoice ? " inactive" : ""}`}
-                onClick={handleDjChoice}
-                disabled={!!song.trim() && !djChoice}
-              >
-                DJ's Choice
-              </button>
-            </div>
-            {djChoice && <p className="dj-hint">The DJ will pick the perfect song — just choose a vibe below.</p>}
+            {djChoice ? (
+              <>
+                <div className="song-row">
+                  <input
+                    className="input-field song-input"
+                    name="song"
+                    autoComplete="off"
+                    placeholder="Suggest a song (optional)"
+                    value={song}
+                    onChange={(e) => setSong(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="dj-choice-btn active"
+                    onClick={() => { setDjChoice(false); setVibe(null); setSuggestions([]) }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+                <p className="dj-hint">You pick the song, we'll find the perfect version — or just choose a vibe below.</p>
+              </>
+            ) : (
+              <div className="song-row">
+                <input
+                  className="input-field song-input"
+                  name="song"
+                  autoComplete="off"
+                  placeholder="Song title *"
+                  value={song}
+                  onChange={(e) => handleSongInput(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className={`dj-choice-btn${song.trim() ? " inactive" : ""}`}
+                  onClick={handleDjChoice}
+                  disabled={!!song.trim()}
+                >
+                  DJ's Choice
+                </button>
+              </div>
+            )}
           </div>
 
           {djChoice && (
