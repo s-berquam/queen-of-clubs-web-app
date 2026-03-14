@@ -41,7 +41,7 @@ export default function Landing() {
           <button className="secondary">View Queue</button>
         </Link>
         <Link href="/book">
-          <button className="book-btn">Book All Love</button>
+          <button className="book-btn">Book With Us</button>
         </Link>
       </div>
 
