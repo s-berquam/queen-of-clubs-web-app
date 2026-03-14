@@ -134,13 +134,37 @@ export default function RequestPage() {
       .select("id")
       .single()
 
-    setLoading(false)
-
     if (error) {
+      setLoading(false)
       setErrorMsg(`Supabase insert error: ${error.message}`)
+      return
+    }
+
+    const requestId = data.id
+    const songLabel = djChoice ? "DJ's Choice" : song.trim()
+    const artistLabel = artist.trim()
+
+    localStorage.setItem("my_request_id", requestId)
+    localStorage.setItem("my_request_song", songLabel)
+    localStorage.setItem("my_request_artist", artistLabel)
+
+    if (tipAmount) {
+      const res = await fetch("/api/dj-tip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId, tipAmount }),
+      })
+      const json = await res.json()
+      setLoading(false)
+      if (json.url) {
+        window.location.href = json.url
+      } else {
+        alert("Payment setup failed. Please try again.")
+        setSubmitted({ song: songLabel, artist: artistLabel, requestId })
+      }
     } else {
-      if (data?.id) localStorage.setItem("my_request_id", data.id)
-      setSubmitted({ song: djChoice ? "DJ's Choice" : song.trim(), artist: artist.trim(), requestId: data.id })
+      setLoading(false)
+      setSubmitted({ song: songLabel, artist: artistLabel, requestId })
     }
   }
 
@@ -215,14 +239,6 @@ export default function RequestPage() {
               <p className="modal-song">
                 {submitted.song} <span className="modal-by">by</span> {submitted.artist}
               </p>
-              {tipAmount && (
-                <div className="modal-tip">
-                  <p className="modal-sub">Send a <strong style={{ color: "#6b7c3a" }}>${tipAmount}</strong> tip to the DJ?</p>
-                  <button className="selfie-cta-btn" onClick={() => handleTip(tipAmount)} disabled={tipping}>
-                    {tipping ? "Redirecting..." : `Tip $${tipAmount}`}
-                  </button>
-                </div>
-              )}
               <p className="modal-sub">Want to show your face on the big screen?</p>
               <button className="selfie-cta-btn" onClick={goToSelfie}>Take a Selfie</button>
               <Link href="/queue" className="skip-link" style={{ color: "#6b7c3a" }}>Skip — take me to the queue</Link>

@@ -43,6 +43,8 @@ export default function QueuePage() {
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [boostSuccess, setBoostSuccess] = useState(false)
   const [selfieSuccess, setSelfieSuccess] = useState(false)
+  const [tipSuccess, setTipSuccess] = useState(false)
+  const [showSelfiePrompt, setShowSelfiePrompt] = useState(false)
   const [showOptIn, setShowOptIn] = useState(false)
   const [optInSubmitting, setOptInSubmitting] = useState(false)
   const [optInDone, setOptInDone] = useState(false)
@@ -81,6 +83,10 @@ export default function QueuePage() {
       setSelfieSuccess(true)
       window.history.replaceState({}, "", window.location.pathname)
       successTimerRef.current = setTimeout(() => setSelfieSuccess(false), 4000)
+    }
+    if (params.get("tip_success") === "true") {
+      setTipSuccess(true)
+      window.history.replaceState({}, "", window.location.pathname)
     }
     return () => clearTimeout(successTimerRef.current)
   }, [])
@@ -127,6 +133,12 @@ export default function QueuePage() {
 
     return () => { supabase.removeChannel(channel) }
   }, [])
+
+  function goToSelfie() {
+    const song = localStorage.getItem("my_request_song") ?? ""
+    const artist = localStorage.getItem("my_request_artist") ?? ""
+    router.push(`/selfie?song=${encodeURIComponent(song)}&artist=${encodeURIComponent(artist)}`)
+  }
 
   async function handleBoost(amount: number) {
     if (!boostTargetId || boosting) return
@@ -205,6 +217,29 @@ export default function QueuePage() {
           >♥</span>
         ))}
       </div>
+
+      {/* Tip success popup */}
+      {tipSuccess && (
+        <div className="popup-overlay">
+          <div className="popup">
+            <div className="popup-icon">💸</div>
+            <p>Tip sent! The DJ appreciates you.</p>
+            <button onClick={() => { setTipSuccess(false); setShowSelfiePrompt(true) }}>Next</button>
+          </div>
+        </div>
+      )}
+
+      {/* Selfie prompt popup */}
+      {showSelfiePrompt && (
+        <div className="popup-overlay">
+          <div className="popup selfie-prompt-popup">
+            <div className="popup-icon">📸</div>
+            <p>Want to show your face on the big screen?</p>
+            <button className="selfie-prompt-yes" onClick={() => { setShowSelfiePrompt(false); goToSelfie() }}>Take a Selfie</button>
+            <button className="selfie-prompt-no" onClick={() => setShowSelfiePrompt(false)}>No thanks</button>
+          </div>
+        </div>
+      )}
 
       {/* Boost success popup */}
       {boostSuccess && (
@@ -608,6 +643,21 @@ export default function QueuePage() {
           padding: 0.5rem 1.5rem; border-radius: 20px; border: none;
           background: #9effa3; color: #2c1a3b; font-weight: bold; cursor: pointer;
         }
+        .selfie-prompt-popup {
+          border-color: #a07cc5;
+          gap: 0.75rem;
+        }
+        .selfie-prompt-yes {
+          width: 100%; padding: 0.75rem; border-radius: 12px; border: none;
+          background: #a07cc5; color: #2c1a3b; font-size: 1rem;
+          font-weight: bold; cursor: pointer; transition: background 0.2s;
+        }
+        .selfie-prompt-yes:hover { background: #8a63b0; }
+        .selfie-prompt-no {
+          background: transparent; border: none; color: #7a6a8a;
+          font-size: 0.85rem; cursor: pointer; text-decoration: underline; padding: 0;
+        }
+        .selfie-prompt-no:hover { color: #c9b8e0; }
         .optin-popup {
           border-color: #d8b8ff;
           gap: 0.75rem;
