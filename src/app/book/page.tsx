@@ -121,8 +121,7 @@ export default function BookPage() {
         <div className="top-nav">
           <button className="back-arrow" onClick={() => router.push("/home")}>⌂ Home</button>
         </div>
-        <h1 className={pacifico.className}>Book All Love</h1>
-        <p className="sub">Fill out the form below and I'll get back to you to discuss your event.</p>
+        <p className="sub">Fill out the form below and we'll get back to you to discuss your event.</p>
 
         <form onSubmit={handleSubmit}>
           {errorMsg && <p className="error">{errorMsg}</p>}
