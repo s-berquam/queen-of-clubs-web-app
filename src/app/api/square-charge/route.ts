@@ -33,6 +33,8 @@ export async function POST(req: NextRequest) {
       if (!customerId) {
         const { customer } = await square.customers.create({
           idempotencyKey: crypto.randomUUID(),
+          referenceId: requestId,
+          companyName: "Queue Tip",
         })
         customerId = customer?.id
       }

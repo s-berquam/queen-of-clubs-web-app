@@ -73,7 +73,33 @@ export default function TipModal({ title, tipAmount, tipType, requestId, onSucce
       }
       try {
         const payments = await window.Square.payments(appId, locationId)
-        card = await payments.card()
+        card = await payments.card({
+          style: {
+            ".input-container": {
+              borderColor: "#4e3268",
+              borderRadius: "8px",
+            },
+            ".input-container.is-focus": {
+              borderColor: "#a07cc5",
+            },
+            ".input-container.is-error": {
+              borderColor: "#ff6b6b",
+            },
+            ".message-text": {
+              color: "#c9b8e0",
+            },
+            ".message-icon": {
+              color: "#c9b8e0",
+            },
+            input: {
+              backgroundColor: "#3d2656",
+              color: "#f0e6f5",
+            },
+            "input::placeholder": {
+              color: "#7a6a8a",
+            },
+          },
+        })
         if (cardContainerRef.current) {
           await card.attach(cardContainerRef.current)
           cardInstanceRef.current = card
