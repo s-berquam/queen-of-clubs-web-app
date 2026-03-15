@@ -93,6 +93,7 @@ export default function Dashboard() {
     const totalTips = (eventRequests ?? []).reduce((sum, r) => sum + (r.price_paid ?? 0), 0)
     await supabase.from("events").update({ is_active: false, total_tips: totalTips }).eq("id", activeEvent.id)
     setActiveEvent(null)
+    setRequests([])
     setEventSaving(false)
   }
 
