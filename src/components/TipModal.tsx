@@ -58,15 +58,21 @@ export default function TipModal({ title, tipAmount, tipType, requestId, onSucce
     let card: SquareCard | null = null
 
     async function init() {
+      const appId = process.env.NEXT_PUBLIC_SQUARE_APP_ID
+      const locationId = process.env.NEXT_PUBLIC_SQUARE_LOCATION_ID
+      if (!appId || !locationId) {
+        setError("Payment config missing. Contact support.")
+        return
+      }
       if (!window.Square) {
         await loadScript()
       }
-      if (!window.Square) return
+      if (!window.Square) {
+        setError("Payment form failed to load. Please refresh and try again.")
+        return
+      }
       try {
-        const payments = await window.Square.payments(
-          process.env.NEXT_PUBLIC_SQUARE_APP_ID!,
-          process.env.NEXT_PUBLIC_SQUARE_LOCATION_ID!
-        )
+        const payments = await window.Square.payments(appId, locationId)
         card = await payments.card()
         if (cardContainerRef.current) {
           await card.attach(cardContainerRef.current)
@@ -74,7 +80,9 @@ export default function TipModal({ title, tipAmount, tipType, requestId, onSucce
           setCardReady(true)
         }
       } catch (e) {
-        setError("Failed to load payment form.")
+        const msg = e instanceof Error ? e.message : String(e)
+        console.error("Square init error:", msg)
+        setError(`Payment form error: ${msg}`)
       }
     }
 
@@ -89,8 +97,14 @@ export default function TipModal({ title, tipAmount, tipType, requestId, onSucce
 
   function loadScript(): Promise<void> {
     return new Promise((resolve) => {
-      const existing = document.querySelector('script[src*="squarecdn.com"]')
-      if (existing) { resolve(); return }
+      if (window.Square) { resolve(); return }
+      const existing = document.querySelector('script[src*="squarecdn.com"]') as HTMLScriptElement | null
+      if (existing) {
+        // Script tag exists but may still be loading — wait for it
+        existing.addEventListener("load", () => resolve())
+        existing.addEventListener("error", () => resolve())
+        return
+      }
       const script = document.createElement("script")
       script.src = "https://sandbox.web.squarecdn.com/v1/square.js"
       script.onload = () => resolve()
