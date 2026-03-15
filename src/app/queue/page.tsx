@@ -32,6 +32,14 @@ const SELFIE_TIERS = [
   { amount: 5, label: "$5 — +90s" },
 ]
 
+function sortQueue(reqs: Request[]) {
+  return [...reqs].sort((a, b) => {
+    if (a.status === "up_next" && b.status !== "up_next") return -1
+    if (b.status === "up_next" && a.status !== "up_next") return 1
+    return b.votes - a.votes
+  })
+}
+
 export default function QueuePage() {
   const router = useRouter()
   const [requests, setRequests] = useState<Request[]>([])
@@ -131,7 +139,7 @@ export default function QueuePage() {
         .eq("event_id", activeEventId)
         .in("status", ["pending", "up_next"])
         .order("votes", { ascending: false })
-      if (data) setRequests(data)
+      if (data) setRequests(sortQueue(data))
     }
     fetchQueue()
 
@@ -154,7 +162,7 @@ export default function QueuePage() {
           setRequests((prev) => {
             const rest = prev.filter((x) => x.id !== r.id)
             if (r.status === "pending" || r.status === "up_next") {
-              return [...rest, r].sort((a, b) => b.votes - a.votes)
+              return sortQueue([...rest, r])
             }
             return rest
           })
