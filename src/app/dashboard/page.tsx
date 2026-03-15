@@ -92,6 +92,12 @@ export default function Dashboard() {
       .eq("event_id", activeEvent.id)
     const totalTips = (eventRequests ?? []).reduce((sum, r) => sum + (r.price_paid ?? 0), 0)
     await supabase.from("events").update({ is_active: false, total_tips: totalTips }).eq("id", activeEvent.id)
+    // Archive remaining requests so the queue clears on all devices
+    await supabase
+      .from("requests")
+      .update({ status: "archived" })
+      .eq("event_id", activeEvent.id)
+      .in("status", ["pending", "up_next"])
     setActiveEvent(null)
     setRequests([])
     setEventSaving(false)
