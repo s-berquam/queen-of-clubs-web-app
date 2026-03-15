@@ -38,6 +38,7 @@ type Event = { id: string; name: string; venue: string | null; is_active: boolea
 export default function Dashboard() {
   const [requests, setRequests] = useState<Request[]>([])
   const [activeEvent, setActiveEvent] = useState<Event | null | undefined>(undefined)
+  const [refreshKey, setRefreshKey] = useState(0)
   const [showStartForm, setShowStartForm] = useState(false)
   const [eventName, setEventName] = useState("")
   const [eventVenue, setEventVenue] = useState("")
@@ -81,6 +82,7 @@ export default function Dashboard() {
     setEventName("")
     setEventVenue("")
     setEventSaving(false)
+    setRefreshKey((k) => k + 1)
   }
 
   async function endEvent() {
@@ -101,6 +103,7 @@ export default function Dashboard() {
     setActiveEvent(null)
     setRequests([])
     setEventSaving(false)
+    setRefreshKey((k) => k + 1)
   }
 
   function formatStatus(status: string) {
@@ -195,7 +198,7 @@ export default function Dashboard() {
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [])
+  }, [refreshKey])
 
   const songKey = (r: Request) => `${r.artist.toLowerCase()}|${r.song_title.toLowerCase()}`
 
