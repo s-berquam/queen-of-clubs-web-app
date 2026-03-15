@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { supabase } from "lib/supabase"
 import { useRouter } from "next/navigation"
 import { Pacifico, Poppins } from "next/font/google"
+import TipModal from "../../components/TipModal"
 
 const pacifico = Pacifico({ weight: "400", subsets: ["latin"] })
 const poppins = Poppins({ weight: ["300", "400", "600"], subsets: ["latin"] })
@@ -37,9 +38,8 @@ export default function QueuePage() {
   const [myRequestId, setMyRequestId] = useState<string | null>(null)
   const [search, setSearch] = useState("")
   const [boostTargetId, setBoostTargetId] = useState<string | null>(null)
-  const [boosting, setBoosting] = useState(false)
   const [selfieModalOpen, setSelfieModalOpen] = useState(false)
-  const [tipping, setTipping] = useState(false)
+  const [activeTip, setActiveTip] = useState<{ tipType: "boost" | "selfie"; tipAmount: number; requestId: string } | null>(null)
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [boostSuccess, setBoostSuccess] = useState(false)
   const [selfieSuccess, setSelfieSuccess] = useState(false)
@@ -173,40 +173,16 @@ export default function QueuePage() {
     router.push(`/selfie?song=${encodeURIComponent(song)}&artist=${encodeURIComponent(artist)}`)
   }
 
-  async function handleBoost(amount: number) {
-    if (!boostTargetId || boosting) return
-    setBoosting(true)
-    const res = await fetch("/api/boost-tip", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requestId: boostTargetId, tipAmount: amount }),
-    })
-    const json = await res.json()
-    setBoosting(false)
+  function handleBoost(amount: number) {
+    if (!boostTargetId) return
     setBoostTargetId(null)
-    if (json.url) {
-      window.location.href = json.url
-    } else {
-      alert("Payment setup failed. Please try again.")
-    }
+    setActiveTip({ tipType: "boost", tipAmount: amount, requestId: boostTargetId })
   }
 
-  async function handleSelfieTip(amount: number) {
-    if (!myRequestId || tipping) return
-    setTipping(true)
-    const res = await fetch("/api/selfie-tip", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requestId: myRequestId, tipAmount: amount }),
-    })
-    const json = await res.json()
-    setTipping(false)
+  function handleSelfieTip(amount: number) {
+    if (!myRequestId) return
     setSelfieModalOpen(false)
-    if (json.url) {
-      window.location.href = json.url
-    } else {
-      alert("Payment setup failed. Please try again.")
-    }
+    setActiveTip({ tipType: "selfie", tipAmount: amount, requestId: myRequestId })
   }
 
   const myRequest = myRequestId ? requests.find((r) => r.id === myRequestId) : null
@@ -330,38 +306,54 @@ export default function QueuePage() {
         </div>
       )}
 
-      {/* Boost modal */}
+      {/* Tip payment modal */}
+      {activeTip && (
+        <TipModal
+          title={activeTip.tipType === "boost" ? "Boost this song" : "Keep your selfie on screen"}
+          tipAmount={activeTip.tipAmount}
+          tipType={activeTip.tipType}
+          requestId={activeTip.requestId}
+          onSuccess={() => {
+            setActiveTip(null)
+            if (activeTip.tipType === "boost") setBoostSuccess(true)
+            if (activeTip.tipType === "selfie") setSelfieSuccess(true)
+          }}
+          onClose={() => setActiveTip(null)}
+        />
+      )}
+
+      {/* Boost tier selection modal */}
       {boostTargetId && (
-        <div className="modal-overlay" onClick={() => !boosting && setBoostTargetId(null)}>
+        <div className="modal-overlay" onClick={() => setBoostTargetId(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h2>Boost your song</h2>
             <p className="modal-sub">Tip to move up in the queue:</p>
             <div className="tip-tiers">
               {BOOST_TIERS.map((tier) => (
-                <button key={tier.amount} className="tip-tier-btn" onClick={() => handleBoost(tier.amount)} disabled={boosting}>
+                <button key={tier.amount} className="tip-tier-btn" onClick={() => handleBoost(tier.amount)}>
                   {tier.label}
                 </button>
               ))}
             </div>
-            <button className="modal-cancel" onClick={() => setBoostTargetId(null)} disabled={boosting}>Cancel</button>
+            <button className="modal-cancel" onClick={() => setBoostTargetId(null)}>Cancel</button>
           </div>
         </div>
       )}
 
-      {/* Selfie tip modal */}
+      {/* Selfie tip tier modal */}
       {selfieModalOpen && (
-        <div className="modal-overlay" onClick={() => !tipping && setSelfieModalOpen(false)}>
+        <div className="modal-overlay" onClick={() => setSelfieModalOpen(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h2>Keep your selfie on screen! 🔥</h2>
             <p className="modal-sub">Tip to add more screen time:</p>
             <div className="tip-tiers">
               {SELFIE_TIERS.map((tier) => (
-                <button key={tier.amount} className="tip-tier-btn" onClick={() => handleSelfieTip(tier.amount)} disabled={tipping}>
+                <button key={tier.amount} className="tip-tier-btn" onClick={() => handleSelfieTip(tier.amount)}>
                   {tier.label}
                 </button>
               ))}
             </div>
-            <button className="modal-cancel" onClick={() => setSelfieModalOpen(false)} disabled={tipping}>Cancel</button>
+            <button className="modal-cancel" onClick={() => setSelfieModalOpen(false)}>Cancel</button>
           </div>
         </div>
       )}

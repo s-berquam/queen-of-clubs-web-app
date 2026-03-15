@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from "uuid"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Pacifico, Poppins } from "next/font/google"
+import TipModal from "../../components/TipModal"
 
 const pacifico = Pacifico({ weight: "400", subsets: ["latin"] })
 const poppins = Poppins({ weight: ["300", "400", "600"], subsets: ["latin"] })
@@ -34,7 +35,7 @@ export default function RequestPage() {
   const [phoneError, setPhoneError] = useState("")
   const [submitted, setSubmitted] = useState<{ song: string; artist: string; requestId: string } | null>(null)
   const [tipAmount, setTipAmount] = useState<number | null>(null)
-  const [tipping, setTipping] = useState(false)
+  const [activeTip, setActiveTip] = useState<{ tipAmount: number; requestId: string } | null>(null)
   const [firstNameError, setFirstNameError] = useState(false)
   const firstNameRef = useRef<HTMLInputElement>(null)
   const [itunesTracks, setItunesTracks] = useState<ItunesTrack[]>([])
@@ -224,40 +225,11 @@ export default function RequestPage() {
     localStorage.setItem("my_request_song", songLabel)
     localStorage.setItem("my_request_artist", artistLabel)
 
+    setLoading(false)
     if (tipAmount) {
-      const res = await fetch("/api/dj-tip", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestId, tipAmount }),
-      })
-      const json = await res.json()
-      setLoading(false)
-      if (json.url) {
-        window.location.href = json.url
-      } else {
-        alert("Payment setup failed. Please try again.")
-        setSubmitted({ song: songLabel, artist: artistLabel, requestId })
-      }
+      setActiveTip({ tipAmount, requestId })
     } else {
-      setLoading(false)
       setSubmitted({ song: songLabel, artist: artistLabel, requestId })
-    }
-  }
-
-  async function handleTip(amount: number) {
-    if (!submitted?.requestId || tipping) return
-    setTipping(true)
-    const res = await fetch("/api/dj-tip", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requestId: submitted.requestId, tipAmount: amount }),
-    })
-    const json = await res.json()
-    setTipping(false)
-    if (json.url) {
-      window.location.href = json.url
-    } else {
-      alert("Payment setup failed. Please try again.")
     }
   }
 
@@ -306,6 +278,28 @@ export default function RequestPage() {
         <p className="intro">
           Tell us who you want to hear — then either name the song or let the DJ pick something perfect for the vibe.
         </p>
+
+        {/* DJ tip payment modal */}
+        {activeTip && (
+          <TipModal
+            title="Tip the DJ"
+            tipAmount={activeTip.tipAmount}
+            tipType="dj"
+            requestId={activeTip.requestId}
+            onSuccess={() => {
+              const song = localStorage.getItem("my_request_song") ?? ""
+              const artist = localStorage.getItem("my_request_artist") ?? ""
+              setActiveTip(null)
+              setSubmitted({ song, artist, requestId: activeTip.requestId })
+            }}
+            onClose={() => {
+              const song = localStorage.getItem("my_request_song") ?? ""
+              const artist = localStorage.getItem("my_request_artist") ?? ""
+              setActiveTip(null)
+              setSubmitted({ song, artist, requestId: activeTip.requestId })
+            }}
+          />
+        )}
 
         {/* Success modal */}
         {submitted && (
