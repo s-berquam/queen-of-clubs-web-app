@@ -192,7 +192,8 @@ export default function Dashboard() {
 
   const songKey = (r: Request) => `${r.artist.toLowerCase()}|${r.song_title.toLowerCase()}`
 
-  const filtered = vibeFilter ? requests.filter((r) => r.vibe === vibeFilter) : requests
+  const active = requests.filter((r) => r.status !== "played" && r.status !== "archived")
+  const filtered = vibeFilter ? active.filter((r) => r.vibe === vibeFilter) : active
 
   // Group by song+artist, preserving newest-first order
   const groupMap = new Map<string, Request[]>()
@@ -204,11 +205,10 @@ export default function Dashboard() {
   const groups = Array.from(groupMap.values()).map((reqs) => {
     const rep = reqs[0] // newest first
     const selfieReq = reqs.find((r) => r.selfie_url && r.selfie_status === "pending") ?? null
-    const allPlayed = reqs.every((r) => r.status === "played")
     const anyUpNext = reqs.some((r) => r.status === "up_next")
     const totalTip = reqs.reduce((sum, r) => sum + (r.price_paid ?? 0), 0)
     const totalBoost = reqs.reduce((sum, r) => sum + (r.boost_amount ?? 0), 0)
-    return { key: songKey(rep), rep, reqs, selfieReq, allPlayed, anyUpNext, totalTip, totalBoost, count: reqs.length }
+    return { key: songKey(rep), rep, reqs, selfieReq, anyUpNext, totalTip, totalBoost, count: reqs.length }
   }).sort((a, b) => {
     if (Number(b.anyUpNext) !== Number(a.anyUpNext)) return Number(b.anyUpNext) - Number(a.anyUpNext)
     const aVotes = a.reqs.reduce((sum, r) => sum + (r.votes ?? 0), 0)
@@ -291,10 +291,10 @@ export default function Dashboard() {
             </tr>
           </thead>
           <tbody>
-            {groups.map(({ key, rep, reqs, selfieReq, allPlayed, anyUpNext, totalTip, totalBoost, count }) => {
+            {groups.map(({ key, rep, reqs, selfieReq, anyUpNext, totalTip, totalBoost, count }) => {
               const ids = reqs.map((r) => r.id)
               return (
-              <tr key={key} className={allPlayed ? "played" : ""}>
+              <tr key={key}>
                 <td>
                   {rep.song_title === "" ? (
                     <div
