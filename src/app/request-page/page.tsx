@@ -57,6 +57,15 @@ export default function RequestPage() {
     return () => document.removeEventListener("mousedown", handleMouseDown)
   }, [])
 
+  useEffect(() => {
+    const savedName = localStorage.getItem("req_first_name")
+    const savedEmail = localStorage.getItem("req_email")
+    const savedPhone = localStorage.getItem("req_phone")
+    if (savedName) setFirstName(savedName)
+    if (savedEmail) setEmail(savedEmail)
+    if (savedPhone) setPhone(savedPhone)
+  }, [])
+
   function validateEmail(email: string) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
   }
@@ -203,6 +212,9 @@ export default function RequestPage() {
     localStorage.setItem("my_request_id", requestId)
     localStorage.setItem("my_request_song", songLabel)
     localStorage.setItem("my_request_artist", artistLabel)
+    localStorage.setItem("req_first_name", firstName.trim())
+    if (email.trim()) localStorage.setItem("req_email", email.trim())
+    if (phone.trim()) localStorage.setItem("req_phone", phone.trim())
 
     setLoading(false)
     if (tipAmount) {
