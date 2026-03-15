@@ -209,7 +209,12 @@ export default function Dashboard() {
     const totalTip = reqs.reduce((sum, r) => sum + (r.price_paid ?? 0), 0)
     const totalBoost = reqs.reduce((sum, r) => sum + (r.boost_amount ?? 0), 0)
     return { key: songKey(rep), rep, reqs, selfieReq, allPlayed, anyUpNext, totalTip, totalBoost, count: reqs.length }
-  }).sort((a, b) => Number(b.anyUpNext) - Number(a.anyUpNext))
+  }).sort((a, b) => {
+    if (Number(b.anyUpNext) !== Number(a.anyUpNext)) return Number(b.anyUpNext) - Number(a.anyUpNext)
+    const aVotes = a.reqs.reduce((sum, r) => sum + (r.votes ?? 0), 0)
+    const bVotes = b.reqs.reduce((sum, r) => sum + (r.votes ?? 0), 0)
+    return bVotes - aVotes
+  })
 
   return (
     <main className="dashboard" style={{ fontFamily: poppins.style.fontFamily }}>
