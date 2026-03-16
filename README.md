@@ -12,13 +12,13 @@
 
 - **Song Requests** — Guests submit song requests with name, artist, vibe, and optional notes
 - **DJ's Choice** — Guests pick an artist and a vibe; the DJ selects the perfect song
-- **Selfie Integration** — Guests upload selfies for real-time display on screen
+- **Queue Boost** — Guests tip $2 (move up 2 spots) or $5 (jump to top); boost amount drives queue ordering
+- **Selfie Integration** — Guests upload selfies for real-time display on screen; tip to extend screen time
+- **Monitor View** — Read-only realtime queue display for second screens or venue TVs
 - **Event Opt-In** — Guests can opt in to event notifications from Queen of Clubs Collective
 - **DJ Booking** — Guests can submit booking inquiries via the Book With Us page
 - **DJ Dashboard** — Real-time admin view at `/dashboard` with vibe filtering and queue controls (Pending → Up Next → Played → Archived)
 - **Real-time Queue** — Powered by Supabase Realtime; requests update instantly across all clients
-- **Tip Integration** — Square-based tip flow; tip amount determines queue priority weight
-- **Queue Boost** — Tips of $2/$5/$10 map to priority weights; higher tips float to the top
 - **Social Links** — Facebook, Instagram, Discord, and Twitch links on every user-facing page
 
 ---
@@ -46,8 +46,10 @@
 | `/home` | Landing page with navigation |
 | `/request-page` | Song request form with DJ's Choice and tip options |
 | `/queue` | Live song queue — browse requests, boost your song, opt in to event updates |
+| `/selfie` | Selfie upload page; guests can tip to extend their selfie's screen time |
+| `/monitor` | Read-only realtime queue display for venue screens |
 | `/book` | DJ booking inquiry form |
-| `/dashboard` | DJ admin console — live requests, status controls, vibe filter |
+| `/dashboard` | DJ admin console — live requests, status controls, vibe filter, iTunes song search for DJ's Choice |
 
 ---
 
@@ -62,15 +64,18 @@
 | `song_title` | text | Empty when DJ's Choice |
 | `artist` | text | Required |
 | `vibe` | text | Hype, Sing-Along, Feel-Good, Slow Jam, Throwback |
-| `votes` | integer | Default 0 |
 | `status` | text | pending, up_next, played, archived |
+| `boost_amount` | numeric | Cumulative boost tip paid; drives queue ordering |
+| `price_paid` | numeric | Total tip amount paid |
+| `selfie_url` | text | Optional selfie image URL |
+| `selfie_status` | text | pending, approved, rejected |
+| `selfie_duration` | integer | Screen time in seconds (extended by selfie tips) |
 | `email` | text | Optional |
 | `phone` | text | Optional |
 | `notes` | text | Optional |
 | `opt_in` | boolean | Event notification opt-in |
 | `event_id` | uuid | FK to events table |
-| `price_paid` | numeric | Tip amount |
-| `requested_at` | timestamp | |
+| `datetime_requested` | timestamp | |
 
 **`bookings` table**
 
@@ -96,32 +101,34 @@
 | `created_at` | timestamp | |
 
 **Supabase Functions**
-- `get_song_suggestions(p_vibe text, p_event_id uuid)` — top 5 most-requested songs for a vibe; filters by event when provided
+- `get_song_suggestions(p_vibe text, p_event_id uuid)` — top 5 most-requested songs for a vibe, filtered by event
 
 ---
 
 ## Environment Variables
 
+**Required:**
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+SQUARE_ACCESS_TOKEN=
+SQUARE_LOCATION_ID=
+SQUARE_WEBHOOK_SIGNATURE_KEY=
+NEXT_PUBLIC_SQUARE_APP_ID=
+NEXT_PUBLIC_SQUARE_LOCATION_ID=
+NEXT_PUBLIC_BASE_URL=
+```
+
+**Optional:**
 ```
 TWILIO_ACCOUNT_SID=
 TWILIO_AUTH_TOKEN=
 TWILIO_PHONE_NUMBER=
-SUPABASE_URL=
-SUPABASE_SERVICE_ROLE_KEY=
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-NEXT_PUBLIC_BASE_URL=
-SQUARE_ACCESS_TOKEN=
-SQUARE_LOCATION_ID=
-SQUARE_WEBHOOK_SIGNATURE_KEY=
 META_APP_ID=
 META_APP_SECRET=
 META_PAGE_ACCESS_TOKEN=
 META_IG_ACCOUNT_ID=
-REDDIT_CLIENT_ID=
-REDDIT_CLIENT_SECRET=
-REDDIT_USERNAME=
-REDDIT_PASSWORD=
 DISCORD_WEBHOOK_URL=
 EVENTBRITE_TOKEN=
 EVENTBRITE_ORG_ID=

@@ -15,7 +15,7 @@ type Request = {
   song_title: string
   artist: string
   vibe: string | null
-  votes: number
+  boost_amount?: number
   status: "pending" | "up_next" | "played" | "archived"
   selfie_status: string | null
 }
@@ -35,7 +35,7 @@ function sortQueue(reqs: Request[]) {
   return [...reqs].sort((a, b) => {
     if (a.status === "up_next" && b.status !== "up_next") return -1
     if (b.status === "up_next" && a.status !== "up_next") return 1
-    return b.votes - a.votes
+    return (b.boost_amount ?? 0) - (a.boost_amount ?? 0)
   })
 }
 
@@ -134,10 +134,10 @@ export default function QueuePage() {
 
       const { data } = await supabase
         .from("requests")
-        .select("id, first_name, song_title, artist, vibe, votes, status, selfie_status")
+        .select("id, first_name, song_title, artist, vibe, boost_amount, status, selfie_status")
         .eq("event_id", activeEventId)
         .in("status", ["pending", "up_next"])
-        .order("votes", { ascending: false })
+        .order("boost_amount", { ascending: false })
       if (data) setRequests(sortQueue(data))
     }
     fetchQueue()
@@ -149,7 +149,7 @@ export default function QueuePage() {
           const r = payload.new as Request & { event_id: string | null }
           if (r.event_id !== activeEventId) return
           if (r.status === "pending" || r.status === "up_next") {
-            setRequests((prev) => [...prev, r].sort((a, b) => b.votes - a.votes))
+            setRequests((prev) => [...prev, r].sort((a, b) => (b.boost_amount ?? 0) - (a.boost_amount ?? 0)))
           }
         } else if (payload.eventType === "UPDATE") {
           const r = payload.new as Request & { event_id: string | null }

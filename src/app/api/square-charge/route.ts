@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
   try {
     const { data: row } = await supabase
       .from("requests")
-      .select("price_paid, selfie_duration, votes, boost_amount, event_id")
+      .select("price_paid, selfie_duration, boost_amount, event_id")
       .eq("id", requestId)
       .single()
 
@@ -87,32 +87,31 @@ export async function POST(req: NextRequest) {
     if (tipType === "dj") {
       await supabase.from("requests").update({ price_paid: newPricePaid }).eq("id", requestId)
     } else if (tipType === "boost") {
-      let newVotes = row?.votes ?? 0
+      let newBoostAmount = (row?.boost_amount ?? 0) + tipAmount
 
       if (row?.event_id) {
         const { data: queue } = await supabase
           .from("requests")
-          .select("id, votes")
+          .select("id, boost_amount")
           .eq("event_id", row.event_id)
           .in("status", ["pending", "up_next"])
-          .order("votes", { ascending: false })
+          .order("boost_amount", { ascending: false })
 
         if (queue && queue.length > 0) {
           const currentPos = queue.findIndex((r) => r.id === requestId)
           if (tipAmount >= 5) {
             // Jump to top
-            if (currentPos !== 0) newVotes = (queue[0].votes ?? 0) + 1
+            if (currentPos !== 0) newBoostAmount = (queue[0].boost_amount ?? 0) + 1
           } else {
             // Move up 2 spots
             const targetPos = Math.max(0, currentPos - 2)
-            if (targetPos < currentPos) newVotes = (queue[targetPos].votes ?? 0) + 1
+            if (targetPos < currentPos) newBoostAmount = (queue[targetPos].boost_amount ?? 0) + 1
           }
         }
       }
 
       await supabase.from("requests").update({
-        votes: newVotes,
-        boost_amount: (row?.boost_amount ?? 0) + tipAmount,
+        boost_amount: newBoostAmount,
         price_paid: newPricePaid,
       }).eq("id", requestId)
     } else if (tipType === "selfie") {

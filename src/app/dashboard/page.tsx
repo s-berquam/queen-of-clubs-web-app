@@ -16,7 +16,6 @@ type Request = {
   status: "pending" | "up_next" | "played" | "archived"
   datetime_requested: string
   price_paid?: number
-  votes: number
   boost_amount?: number
   vibe: string | null
   selfie_url: string | null
@@ -221,9 +220,7 @@ export default function Dashboard() {
     return { key: songKey(rep), rep, reqs, selfieReq, anyUpNext, totalTip, totalBoost, count: reqs.length }
   }).sort((a, b) => {
     if (Number(b.anyUpNext) !== Number(a.anyUpNext)) return Number(b.anyUpNext) - Number(a.anyUpNext)
-    const aVotes = a.reqs.reduce((sum, r) => sum + (r.votes ?? 0), 0)
-    const bVotes = b.reqs.reduce((sum, r) => sum + (r.votes ?? 0), 0)
-    return bVotes - aVotes
+    return b.totalBoost - a.totalBoost
   })
 
   return (
