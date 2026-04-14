@@ -2,26 +2,13 @@
 
 import { useEffect, useRef, useState } from "react"
 import { supabase } from "lib/supabase"
+import type { Request } from "lib/types"
+import { normalize } from "lib/strings"
 import { Pacifico, Poppins } from "next/font/google"
 
 const pacifico = Pacifico({ weight: "400", subsets: ["latin"] })
 const poppins = Poppins({ weight: ["300", "400", "600"], subsets: ["latin"] })
 
-type Request = {
-  id: string
-  first_name: string
-  song_title: string
-  artist: string
-  notes: string | null
-  status: "pending" | "up_next" | "played" | "archived"
-  datetime_requested: string
-  price_paid?: number
-  boost_amount?: number
-  vibe: string | null
-  selfie_url: string | null
-  selfie_status: string | null
-  selfie_duration: number
-}
 
 const STATUS_VALUES: Record<string, Request["status"]> = {
   Played: "played",
@@ -126,8 +113,8 @@ export default function Dashboard() {
         const res = await fetch(`/api/itunes-search?term=${encodeURIComponent(term)}`)
         const json = await res.json()
         const filtered = (json.results ?? []).filter((t: ItunesTrack) =>
-          t.trackName.toLowerCase().includes(value.trim().toLowerCase()) &&
-          (!artist.trim() || t.artistName.toLowerCase().includes(artist.trim().toLowerCase()))
+          normalize(t.trackName).includes(normalize(value.trim())) &&
+          (!artist.trim() || normalize(t.artistName).includes(normalize(artist.trim())))
         )
         setDjSearchResults((prev) => ({ ...prev, [groupKey]: filtered }))
         setDjSearchOpen(filtered.length > 0 ? groupKey : null)

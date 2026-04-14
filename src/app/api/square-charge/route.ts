@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { SquareClient, SquareEnvironment } from "square"
 import { createClient } from "@supabase/supabase-js"
-
-const square = new SquareClient({
-  token: process.env.SQUARE_ACCESS_TOKEN!,
-  environment: SquareEnvironment.Sandbox,
-})
+import { squareClient as square } from "lib/square"
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
