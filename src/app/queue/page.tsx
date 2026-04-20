@@ -403,7 +403,7 @@ export default function QueuePage() {
             key={req.id}
             className={`queue-card${req.status === "up_next" ? " up-next" : ""}${req.id === myRequestId ? " mine" : ""}`}
           >
-            <div className="rank">#{i + 1}</div>
+            <div className="rank">#{i + 1}{(req.boost_amount ?? 0) > 0 && <span className="boost-fire">🔥</span>}</div>
             <div className="song-info">
               <div className="song-title">
                 {req.artist}{req.song_title ? ` — ${req.song_title}` : ""}
@@ -411,7 +411,7 @@ export default function QueuePage() {
               </div>
               <div className="song-meta">{req.first_name}{req.vibe ? ` · ${req.vibe}` : ""}</div>
             </div>
-            {req.status === "up_next" && <span className="up-next-badge">Up Next</span>}
+            {req.status === "up_next" && i === 0 && <span className="up-next-badge">Next</span>}
             {req.id === myRequestId && req.status !== "up_next" && <span className="my-badge">Yours</span>}
             {req.status === "pending" && (
               <button className="row-boost-btn" onClick={() => setBoostTargetId(req.id)}>Boost</button>
@@ -479,10 +479,10 @@ export default function QueuePage() {
         }
         .up-next-banner {
           max-width: 600px; margin: 0 auto 1rem;
-          background: #1a3b2c; border: 2px solid #9effa3;
+          background: rgba(107, 124, 58, 0.15); border: 2px solid #6b7c3a;
           border-radius: 12px; padding: 0.9rem 1.2rem;
           display: flex; align-items: center; gap: 0.75rem;
-          font-size: 1rem; font-weight: bold; color: #9effa3;
+          font-size: 1rem; font-weight: bold; color: #a0b85a;
           justify-content: center;
         }
         .up-next-pulse {
@@ -519,13 +519,13 @@ export default function QueuePage() {
         .search-input::placeholder { color: #7a6a8a; }
         .search-input:focus { border-color: #a07cc5; }
         .row-boost-btn {
-          background: transparent; border: 2px solid #a07cc5;
-          color: #c9b8e0; border-radius: 12px;
-          font-size: 0.85rem; font-family: ${poppins.style.fontFamily};
-          cursor: pointer; padding: 0.25rem 0.75rem;
+          background: #a07cc5; border: 2px solid #a07cc5;
+          color: #fff; border-radius: 12px;
+          font-size: 0.85rem; font-weight: 600; font-family: ${poppins.style.fontFamily};
+          cursor: pointer; padding: 0.3rem 0.85rem;
           white-space: nowrap; flex-shrink: 0; transition: all 0.2s;
         }
-        .row-boost-btn:hover { background: #a07cc5; color: #c9b8e0; }
+        .row-boost-btn:hover { background: #8a63b0; border-color: #8a63b0; }
         .selfie-banner {
           max-width: 600px; margin: 0 auto 1rem;
           background: #3d2656; border: 2px solid #ffd77d;
@@ -554,10 +554,11 @@ export default function QueuePage() {
           background: #3d2656; border-radius: 12px;
           padding: 0.75rem 1rem; border: 2px solid transparent;
         }
-        .queue-card.up-next { border-color: #9effa3; }
+        .queue-card.up-next { border-color: #6b7c3a; }
         .queue-card.mine { border-color: #a07cc5; }
-        .queue-card.up-next.mine { border-color: #9effa3; }
+        .queue-card.up-next.mine { border-color: #6b7c3a; }
         .rank { font-size: 0.9rem; color: #a07cc5; min-width: 28px; }
+        .boost-fire { display: block; font-size: 0.85rem; text-align: center; }
         .song-info { flex: 1; min-width: 0; }
         .song-title {
           font-weight: 600; font-size: 1rem; letter-spacing: 0.01em;
@@ -578,9 +579,9 @@ export default function QueuePage() {
           letter-spacing: 0.02em;
         }
         .up-next-badge {
-          background: #9effa3; color: #1a3b2c; font-size: 0.75rem;
-          font-weight: bold; padding: 0.2rem 0.5rem;
-          border-radius: 20px; white-space: nowrap;
+          background: #6b7c3a; color: #f0e6f5; font-size: 0.85rem;
+          font-weight: 600; padding: 0.3rem 0.85rem;
+          border-radius: 12px; white-space: nowrap;
         }
         .my-badge {
           background: #a07cc5; color: white; font-size: 0.75rem;
@@ -633,7 +634,7 @@ export default function QueuePage() {
           z-index: 1000; padding: 1rem;
         }
         .popup {
-          background: #3d2656; border: 2px solid #9effa3;
+          background: #3d2656; border: 2px solid #6b7c3a;
           border-radius: 16px; padding: 2rem; max-width: 300px;
           width: 100%; text-align: center; display: flex;
           flex-direction: column; gap: 0.75rem; align-items: center;
@@ -642,7 +643,7 @@ export default function QueuePage() {
         .popup p { font-size: 1rem; color: #f0e6f5; margin: 0; }
         .popup button {
           padding: 0.5rem 1.5rem; border-radius: 20px; border: none;
-          background: #9effa3; color: #2c1a3b; font-weight: bold; cursor: pointer;
+          background: #6b7c3a; color: #f0e6f5; font-weight: bold; cursor: pointer;
         }
         .selfie-prompt-popup {
           border-color: #a07cc5;

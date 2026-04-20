@@ -557,7 +557,7 @@ export default function Dashboard() {
           border-radius: 4px; white-space: nowrap;
         }
         .selfie-badge.pending { background: #ffd77d; color: #333; }
-        .selfie-badge.published { background: #9effa3; color: #000; }
+        .selfie-badge.published { background: #6b7c3a; color: #f0e6f5; }
         .selfie-badge.denied { background: #ff6b6b; color: #fff; }
         .mod-btn {
           font-size: 0.72rem; padding: 0.2rem 0.5rem;
