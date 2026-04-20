@@ -115,7 +115,7 @@ export default function QueuePage() {
 
       const { data } = await supabase
         .from("requests")
-        .select("id, first_name, song_title, artist, vibe, boost_amount, status, selfie_status")
+        .select("id, first_name, song_title, artist, vibe, boost_amount, status, selfie_status, notes, datetime_requested, selfie_url, selfie_duration")
         .eq("event_id", activeEventId)
         .in("status", ["pending", "up_next"])
         .order("boost_amount", { ascending: false })
