@@ -119,12 +119,13 @@ function SelfiePage() {
             <p>Rotate your phone to landscape to take your selfie</p>
           </div>
         ) : (
-          <button className="camera-btn" onClick={() => cameraRef.current?.click()}>
+            <label htmlFor="selfie-input" className="camera-btn">
             Open Camera
-          </button>
+          </label>
         )}
 
         <input
+          id="selfie-input"
           ref={cameraRef}
           type="file"
           accept="image/*"
